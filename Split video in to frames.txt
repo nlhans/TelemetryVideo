@@ -1,0 +1,5 @@
+cmd :
+
+fmpeg -i G:\out\rf.mp4 -f image2 -samq -vcodec mjpeg H:\img-%04d.jpg
+
+http://www.labnol.org/software/extract-image-frames-from-video/18137/
