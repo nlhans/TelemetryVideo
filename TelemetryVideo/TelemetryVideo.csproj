@@ -72,8 +72,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="rFactorReplayEventType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="rFactorReplayData.cs" />
+    <Compile Include="rFactorReplayFile.cs" />
+    <Compile Include="rFactorReplayPlayer.cs" />
+    <Compile Include="TelemetryInfo.cs" />
+    <Compile Include="TrackThumbnail.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

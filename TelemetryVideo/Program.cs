@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -11,170 +10,32 @@ using SimTelemetry.Data.Logger;
 using SimTelemetry.Data.Track;
 using SimTelemetry.Objects;
 
-    public class TrackThumbnail
-    {
-        protected double pos_x_max = 1000000000.0;
-        protected double pos_x_min = -1000000000.0;
-        protected double pos_y_max = 1000000000.0;
-        protected double pos_y_min = -1000000000.0;
-        protected double map_width = 0;
-        protected double map_height = 0;
-
-        protected double scale = 0;
-        protected double offset_x = 0;
-        protected double offset_y = 0;
-
-        #region Settings
-        protected bool AutoPosition = true;
-
-        float track_width = 5f;
-        float pitlane_width = 0f;
-
-        Pen brush_start = new Pen(Color.FromArgb(200, 50, 30), 6f); // 6f=track_width
-        Brush brush_sector1 = new SolidBrush(Color.FromArgb(185, 185, 200));
-        Brush brush_sector2 = new SolidBrush(Color.FromArgb(47, 79, 79));
-        Brush brush_sector3 = new SolidBrush(Color.FromArgb(85, 107, 47));
-        Brush brush_pitlane = new SolidBrush(Color.FromArgb(100, Color.Orange));
-
-        Font tf24 = new Font("calibri", 24f);
-        Font tf16 = new Font("calibri", 16f);
-        Font tf12 = new Font("calibri", 12f);
-        Font tf10 = new Font("calibri", 10f);
-        Font tf18 = new Font("calibri", 18f);
-        Font font_version = new Font("calibri", 24f, FontStyle.Bold | FontStyle.Italic);
-        #endregion
-
-        public float GetX(double x)
-        {
-
-            return Convert.ToSingle(6 + ((x - pos_x_min) / scale * map_width) + offset_x);
-        }
-        public float GetY(double y)
-        {
-            return Convert.ToSingle(6 + (1 - (y - pos_y_min) / scale) * map_height + offset_y);
-        }
-
-        public void Create(string file, string name, string version, RouteCollection route, int width, int height)
-        {
-            Pen pen_track = new Pen(brush_sector1, track_width);
-            try
-            {
-                Image track_img = new Bitmap(width, height);
-                Graphics g = Graphics.FromImage(track_img);
-                g.Clear(Color.Transparent);
-                //g.FillRectangle(Brushes.Black, 0, 0, width, height);
-
-                if (route == null || route.Racetrack == null) return;
-
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-
-                pos_x_max = -100000;
-                pos_x_min = 100000;
-                pos_y_max = -100000;
-                pos_y_min = 1000000;
-
-                foreach (TrackWaypoint wp in route.Racetrack)
-                {
-                    if (wp.Route == TrackRoute.MAIN)
-                    {
-                        pos_x_max = Math.Max(wp.X, pos_x_max);
-                        pos_x_min = Math.Min(wp.X, pos_x_min);
-                        pos_y_max = Math.Max(wp.Z, pos_y_max);
-                        pos_y_min = Math.Min(wp.Z, pos_y_min);
-                    }
-                }
-
-
-                scale = Math.Max(pos_x_max - pos_x_min, pos_y_max - pos_y_min);
-
-                map_width = width - 12;
-                map_height = height - 12;
-
-                offset_x = map_width / 2 - (pos_x_max - pos_x_min) / scale * map_width / 2;
-                offset_y = 0 - (scale - pos_y_max + pos_y_min) / scale * map_height / 2;
-
-                List<PointF> track = new List<PointF>();
-
-                int i = 0;
-                foreach (TrackWaypoint wp in route.Racetrack)
-                {
-                    if (wp.Route == TrackRoute.MAIN)
-                    {
-                        float x1 = Convert.ToSingle(6 + ((wp.X - pos_x_min) / scale * map_width) + offset_x);
-                        float y1 = Convert.ToSingle(6 + (1 - (wp.Z - pos_y_min) / scale) * map_height + offset_y);
-
-                        x1 = Limits.Clamp(x1, -1000, 1000);
-                        y1 = Limits.Clamp(y1, -1000, 1000);
-
-                            track.Add(new PointF(x1, y1));
-                    }
-                }
-
-                // Draw polygons!
-                if (track.Count > 0) g.DrawPolygon(pen_track, track.ToArray());
-
-
-                track_img.Save(file);
-            }
-            catch (Exception ex)
-            {
-
-            }
-        }
-    }
-
 namespace TelemetryVideo
 {
-
-    class TelemetryInfo
-    {
-        public double RPM_Max1 { get; set; }
-        public double RPM_Max2 { get; set; }
-        public double RPM_Redline1 { get; set; }
-        public double RPM_Redline2 { get; set; }
-        public string Circuit2 { get; set; }
-        public string FinalTime1 { get; set; }
-        public string FinalTime2 { get; set; }
-        public int FramesOffset { get; set; }
-        public int FramesTotal { get; set; }
-        public int FramesFade { get; set; }
-
-        public string Circuit { get; set; }
-        public string DataFile1 { get; set; }
-        public string DataFile2 { get; set; }
-
-        public string PicturesInput { get; set; }
-        public string PicturesOutput { get; set; }
-
-        public bool SplitScreen { get; set; }
-        public bool RepeatDriverA { get; set; }
-        public bool RepeatDriverB { get; set; }
-
-        public double TimeOffsetA { get; set; }
-        public double TimeOffsetB { get; set; }
-
-        public Point PointGauge1 { get; set; }
-        public Point PointGauge2 { get; set; }
-        public Point PointTrack { get; set; }
-        public Point PointAnnotation1 { get; set; }
-        public Point PointAnnotation2 { get; set; }
-        public string AnnotationLeft { get; set; }
-        public string AnnotationRight { get; set; }
-
-        public string Title { get; set; }
-        public Point PointTitle { get; set; }
-
-        public Size TrackMapSize { get; set; }
-
-        public bool NewTrackFormat { get; set; }
-
-        public double LapTimeA { get; set; }
-        public double LapTimeB { get; set; }
-    }
     class Program
     {
+
+        public static void GraphicsFast(Graphics g)
+        {
+            g.InterpolationMode = InterpolationMode.NearestNeighbor;
+            g.CompositingQuality = CompositingQuality.HighSpeed;
+            g.CompositingMode = CompositingMode.SourceCopy;
+        }
+
+
+        public static void GraphicsSlow(Graphics g)
+        {
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.CompositingQuality = CompositingQuality.HighQuality;
+            g.CompositingMode = CompositingMode.SourceOver;
+
+        }
+
         static void Main(string[] args)
         {
+            rFactorReplayFile replay = new rFactorReplayFile(@"C:\Users\Hans\Documents\Monte Carlo  1988 Williams_2.Vcr\Monte Carlo  1988 Williams_2.Vcr");
+            replay.Read();
+            return;
             /******* SPA ********/
             /*TelemetryInfo telemetryData = new TelemetryInfo
                                               {
@@ -203,27 +64,27 @@ namespace TelemetryVideo
             {
                 Title = "F1 1991 vs F1 2010",
 
-                FinalTime1 = "01:44.368",
-                FinalTime2 = "01:44.368",
+                FinalTime1 = "01:24.021",
+                FinalTime2 = "01:15.130",
                 Circuit = @"C:\Program Files (x86)\rFactor\GameData\Locations\F1_1988_C4\03_MonteCarlo\MonteCarlo_1988_C4.gdb",
                 Circuit2 = @"C:\Program Files (x86)\rFactor\GameData\Locations\F1WCP\2009\Monaco\MonteCarlo2009\MonteCarlo2009.gdb",
                 DataFile1 = @"..\..\..\Telemetry\F1 1991 Monaco.gz",
                 DataFile2 = @"..\..\..\Telemetry\F1 2010 Monaco.gz",
                 PicturesInput = @"H:\Input",
-                PicturesOutput = @"H:\Output",
+                PicturesOutput = @"G:\Output",
 
                 FramesFade = 10,
                 FramesOffset = 94,
                 FramesTotal = 2657,
 
-                TimeOffsetA = 3.2,
-                TimeOffsetB=0,
+                TimeOffsetA = 3.15,
+                TimeOffsetB = 0,
 
-                LapTimeA = 84.481*1000,
-                LapTimeB = 75.1*1000,
+                LapTimeA = 84.021 * 1000,
+                LapTimeB = 75.13 * 1000,
 
-                RepeatDriverA=true,
-                RepeatDriverB=true,
+                RepeatDriverA = true,
+                RepeatDriverB = true,
 
                 NewTrackFormat = true,
 
@@ -262,20 +123,20 @@ namespace TelemetryVideo
                 read2.ReadPolling();
             }
 
-            var files = Directory.GetFiles(telemetryData.PicturesInput, "*.jpg");
+            var files = Directory.GetFiles(telemetryData.PicturesInput, "*.png");
 
             var fadeStart = telemetryData.FramesOffset;
             var fadeLength = telemetryData.FramesFade;
             var fadeEnd = telemetryData.FramesTotal - telemetryData.FramesFade;
 
-            for (int frameNumber = 95; frameNumber < files.Length; frameNumber+=100)
+            for (int frameNumber = 720; frameNumber < files.Length; frameNumber += 10)
             {
                 var frame = files[frameNumber];
                 var file = telemetryData.PicturesOutput + "\\img-" + frameNumber.ToString("0000") + ".png";
-                var time = (frameNumber - telemetryData.FramesOffset)*1000.0/30.0;
+                var time = (frameNumber - telemetryData.FramesOffset) * 1000.0 / 30.0;
 
-                double alpha = 1.0*(frameNumber - telemetryData.FramesOffset)/telemetryData.FramesFade;
-                if (frameNumber >= fadeEnd) alpha = 1 - 1.0*(frameNumber - fadeEnd)/telemetryData.FramesFade;
+                double alpha = 1.0 * (frameNumber - telemetryData.FramesOffset) / telemetryData.FramesFade;
+                if (frameNumber >= fadeEnd) alpha = 1 - 1.0 * (frameNumber - fadeEnd) / telemetryData.FramesFade;
                 if (alpha > 1) alpha = 1;
 
                 if (frameNumber >= fadeEnd + fadeLength || frameNumber < fadeStart)
@@ -284,21 +145,23 @@ namespace TelemetryVideo
                     using (var imOut = new Bitmap(1920, 1080))
                     {
                         Graphics g = Graphics.FromImage(imOut);
+                        GraphicsFast(g);
                         g.FillRectangle(Brushes.Black, 0, 0, 1920, 1080);
                         g.DrawImage(imIn, (1920 - imIn.Width) / 2, (1080 - imIn.Height) / 2);
+                        GraphicsSlow(g);
                         if (telemetryData.SplitScreen)
                         {
                             if (frameNumber >= fadeEnd + fadeLength)
-                            g.DrawString(telemetryData.FinalTime2, new Font("Tahoma", 48), Brushes.White,
-                                     telemetryData.PointGauge2.X + 50, telemetryData.PointGauge2.Y + 450);
+                                g.DrawString(telemetryData.FinalTime2, new Font("Tahoma", 48), Brushes.White,
+                                         telemetryData.PointGauge2.X + 50, telemetryData.PointGauge2.Y + 450);
 
                             g.DrawString(telemetryData.AnnotationLeft, new Font("Tahoma", 30), Brushes.White, telemetryData.PointAnnotation1);
                             g.DrawString(telemetryData.AnnotationRight, new Font("Tahoma", 30), Brushes.White, telemetryData.PointAnnotation2);
                         }
 
                         if (frameNumber >= fadeEnd + fadeLength)
-                        g.DrawString(telemetryData.FinalTime1, new Font("Tahoma", 48), Brushes.White,
-                                     telemetryData.PointGauge1.X + 50, telemetryData.PointGauge1.Y + 450);
+                            g.DrawString(telemetryData.FinalTime1, new Font("Tahoma", 48), Brushes.White,
+                                         telemetryData.PointGauge1.X + 50, telemetryData.PointGauge1.Y + 450);
 
                         g.DrawString(telemetryData.Title, new Font("Tahoma", 72), Brushes.White, telemetryData.PointTitle);
 
@@ -306,8 +169,8 @@ namespace TelemetryVideo
                     }
                     continue;
                 }
-                var timeA = time - telemetryData.TimeOffsetA*1000;
-                var timeB = time - telemetryData.TimeOffsetB*1000;
+                var timeA = time - telemetryData.TimeOffsetA * 1000;
+                var timeB = time - telemetryData.TimeOffsetB * 1000;
                 var sample1 = 1.0;
                 var sample2 = 1.0;
 
@@ -316,26 +179,27 @@ namespace TelemetryVideo
                     sample1 = read1.Samples
                         .Where(x =>
                                    {
-                                       if (timeA<=0)
+                                       if (timeA <= 0)
                                            return x.Value.Time <=
                                                   (timeA + telemetryData.LapTimeA);
                                        else
                                            return x.Value.Time <= timeA;
                                    })
-                        .OrderBy(x => -1*x.Value.Time)
+                        .OrderBy(x => -1 * x.Value.Time)
                         .FirstOrDefault().Key;
-                }else
+                }
+                else
                 {
                     sample1 = read1.Samples
                         .Where(x => x.Value.Time <= timeA)
                         .OrderBy(x => -1 * x.Value.Time)
                         .FirstOrDefault().Key;
-                    
+
                 }
 
                 sample2 = sample1;
 
-                if(telemetryData.SplitScreen)
+                if (telemetryData.SplitScreen)
                 {
 
 
@@ -344,7 +208,7 @@ namespace TelemetryVideo
                         sample2 = read2.Samples
                             .Where(x =>
                             {
-                                if (timeA <= 0)
+                                if (timeB <= 0)
                                     return x.Value.Time <=
                                            (timeB + telemetryData.LapTimeB);
                                 else
@@ -364,16 +228,16 @@ namespace TelemetryVideo
                 }
 
                 using (var imIn = Image.FromFile(frame))
-                using(var imOut = new Bitmap(1920, 1080))
+                using (var imOut = new Bitmap(1920, 1080))
                 {
                     Graphics g = Graphics.FromImage(imOut);
-                    g.SmoothingMode = SmoothingMode.AntiAlias;
-                    g.CompositingQuality = CompositingQuality.HighQuality;
+                    GraphicsFast(g);
 
                     g.FillRectangle(Brushes.Black, 0, 0, 1920, 1080);
-                    g.DrawImage(imIn, (1920 - imIn.Width)/2, (1080 - imIn.Height)/2);
+                    g.DrawImage(imIn, (1920 - imIn.Width) / 2, (1080 - imIn.Height) / 2);
 
                     /******* TRACK ******/
+                    GraphicsSlow(g);
                     g.DrawImage(imgTrack, telemetryData.PointTrack.X, telemetryData.PointTrack.Y);
 
                     double xA = 0, yA = 0;
@@ -382,43 +246,56 @@ namespace TelemetryVideo
                     {
 
                         var DriverBrushA = GetBrush(alpha, 255, 100, 255, 0);
-                        xA = read1.GetDouble(sample1, "Driver.CoordinateX");
-                        if (telemetryData.NewTrackFormat)
-                            yA = read1.GetDouble(sample1, "Driver.CoordinateY");
-                        else
-                        yA = read1.GetDouble(sample1, "Driver.CoordinateZ");
+                        try
+                        {
+                            xA = read1.GetDouble(sample1, "Driver.CoordinateX");
+                            if (telemetryData.NewTrackFormat)
+                                yA = read1.GetDouble(sample1, "Driver.CoordinateY");
+                            else
+                                yA = read1.GetDouble(sample1, "Driver.CoordinateZ");
 
-                        var pxA = telemetryData.PointTrack.X + TrackThumbnail.GetX(xA);
-                        var pyA = telemetryData.PointTrack.Y + TrackThumbnail.GetY(yA);
+                            var pxA = telemetryData.PointTrack.X + TrackThumbnail.GetX(xA);
+                            var pyA = telemetryData.PointTrack.Y + TrackThumbnail.GetY(yA);
 
-                        g.FillEllipse(DriverBrushA, pxA - 6, pyA - 6, 13, 13);
+                            g.FillEllipse(DriverBrushA, pxA - 6, pyA - 6, 13, 13);
+                        }
+                        catch (Exception)
+                        {
+
+                        }
                     }
 
                     if (sample2 != 0 && telemetryData.SplitScreen)
                     {
+                        try
+                        {
+                            var DriverBrushB = GetBrush(alpha, 255, 255, 100, 0);
 
-                        var DriverBrushB = GetBrush(alpha, 255, 255, 100, 0);
+                            xB = read2.GetDouble(sample2, "Driver.CoordinateX");
+                            if (telemetryData.NewTrackFormat)
+                                yB = read2.GetDouble(sample2, "Driver.CoordinateZ");
+                            else
+                                yB = read2.GetDouble(sample2, "Driver.CoordinateZ");
 
-                        xB = read2.GetDouble(sample2, "Driver.CoordinateX");
-                        if (telemetryData.NewTrackFormat)
-                            yB = read2.GetDouble(sample2, "Driver.CoordinateZ");
-                        else
-                            yB = read2.GetDouble(sample2, "Driver.CoordinateZ");
+                            var pxB = telemetryData.PointTrack.X + TrackThumbnail2.GetX(xB);
+                            var pyB = telemetryData.PointTrack.Y + TrackThumbnail2.GetY(yB);
 
-                        var pxB = telemetryData.PointTrack.X + TrackThumbnail2.GetX(xB);
-                        var pyB = telemetryData.PointTrack.Y + TrackThumbnail2.GetY(yB);
+                            g.FillEllipse(DriverBrushB, pxB - 6, pyB - 6, 13, 13);
+                        }
+                        catch (Exception)
+                        {
 
-                        g.FillEllipse(DriverBrushB, pxB - 6, pyB - 6, 13, 13);
+                        }
                     }
 
                     if (telemetryData.SplitScreen)
                     {
                         var BrushBackground = GetBrush(alpha, 150, 0, 0, 0);
 
-                        g.FillRectangle(BrushBackground, 0, 834, 1920,90);
+                        g.FillRectangle(BrushBackground, 0, 844, 1920, 80);
 
-                        DrawSlimGauges(read1, alpha, frameNumber, telemetryData.PointGauge1, sample1, time, g, telemetryData.RPM_Max1, telemetryData.RPM_Redline1);
-                        DrawSlimGauges(read2, alpha, frameNumber, telemetryData.PointGauge2, sample2, time, g, telemetryData.RPM_Max2, telemetryData.RPM_Redline2);
+                        DrawSlimGauges(read1, alpha, frameNumber, telemetryData.PointGauge1, sample1, time, telemetryData.LapTimeA, g, telemetryData.RPM_Max1, telemetryData.RPM_Redline1);
+                        DrawSlimGauges(read2, alpha, frameNumber, telemetryData.PointGauge2, sample2, time, telemetryData.LapTimeB, g, telemetryData.RPM_Max2, telemetryData.RPM_Redline2);
                         g.DrawString(telemetryData.AnnotationLeft, new Font("Tahoma", 30), Brushes.White, telemetryData.PointAnnotation1);
                         g.DrawString(telemetryData.AnnotationRight, new Font("Tahoma", 30), Brushes.White, telemetryData.PointAnnotation2);
                     }
@@ -438,7 +315,7 @@ namespace TelemetryVideo
 
         }
 
-        private static void DrawSlimGauges(TelemetryLogReader read, double alpha, int frameNumber, Point positionGauge, double sample, double time, Graphics g, double rpm_max, double rpm_redline)
+        private static void DrawSlimGauges(TelemetryLogReader read, double alpha, int frameNumber, Point positionGauge, double sample, double time, double laptime, Graphics g, double rpm_max, double rpm_redline)
         {
             var Brush_PedalsBackground = GetBrush(alpha, 255, 100, 100, 100);
             var Brush_PedalsBrake = GetBrush(alpha, 255, 200, 0, 0);
@@ -463,8 +340,15 @@ namespace TelemetryVideo
                 brake = read.GetDouble(sample, "Player.Pedals_Brake");
                 rpm = Rotations.Rads_RPM(read.GetDouble(sample, "Driver.RPM"));
                 gear = (int)read.Get(sample, "Driver.Gear");
-                gear = Math.Max(gear,(int)read.Get(sample, "Player.Gear"));
+                gear = Math.Max(gear, (int)read.Get(sample, "Player.Gear"));
                 speed = read.GetDouble(sample, "Driver.Speed") * 3.6;
+
+                // TMP:
+                if (rpm_max >= 16000)
+                {
+                    if (frameNumber <= 115)
+                        gear = 7;
+                }
 
                 rpm_min = 4000;
 
@@ -480,18 +364,20 @@ namespace TelemetryVideo
             var BrushGear = GetBrush(alpha, 255, 255, 255 - Convert.ToInt32(redline * 200), 255 - Convert.ToInt32(redline * 200));
 
             /******* gear etc. ******/
-            g.DrawString(gear.ToString(), new Font("Tahoma", 36, FontStyle.Bold), BrushGear, positionGauge.X, positionGauge.Y + 150);
-            g.DrawString(Math.Floor(speed).ToString("000"), new Font("Tahoma", 30, FontStyle.Bold), BrushWhite, positionGauge.X+50, positionGauge.Y + 155);
-            g.DrawString("kmh", new Font("Tahoma", 16), BrushWhite, positionGauge.X + 140, positionGauge.Y + 175);
+            GraphicsSlow(g);
+
+            g.DrawString(gear.ToString(), new Font("Tahoma", 36, FontStyle.Bold), BrushGear, positionGauge.X, positionGauge.Y + 160);
+            g.DrawString(Math.Floor(speed).ToString("000"), new Font("Tahoma", 30, FontStyle.Bold), BrushWhite, positionGauge.X + 50, positionGauge.Y + 165);
+            g.DrawString("kmh", new Font("Tahoma", 16), BrushWhite, positionGauge.X + 140, positionGauge.Y + 185);
 
             /******** LAPTIME *******/
-            var tijd = time / 1000.0;
+            var tijd = Math.Min(laptime / 1000.0, time / 1000.0);
             var minutes = (tijd - (tijd % 60)) / 60;
             var seconds = Math.Floor(tijd - minutes * 60);
             var mills = (tijd % 1.0) * 1000;
             var txt = String.Format("{0:00}:{1:00}.{2:000}", minutes, seconds, mills);
-            g.DrawString(txt, new Font("Tahoma", 40), BrushTime, positionGauge.X, positionGauge.Y + 235);
-            
+            g.DrawString(txt + (sample / 1000).ToString(" 000.00"), new Font("Tahoma", 40), BrushTime, positionGauge.X, positionGauge.Y + 235);
+
             /****** tacho meter******/
             var rpm_size = 300.0f;
 
@@ -509,25 +395,26 @@ namespace TelemetryVideo
 
                 if (rpm_max > 10000)
                 {
-                    if (r%2 != 0)
+                    if (r % 2 != 0)
                         draw = false;
                 }
-                var br = (r >= rpm_redline/1000) ? BrushRed : BrushWhite;
+                var br = (r >= rpm_redline / 1000) ? BrushRed : BrushWhite;
                 float x = Convert.ToSingle((r - rpm_min / 1000) * rpm_size / (rpm_max / 1000 - rpm_min / 1000));
                 x += positionGauge.X + 200 + 140 + 30;
-                if(draw){
-                g.DrawString(r.ToString(), new Font("Tahoma", 14.0f), br,
-                    x - 7- ((r.ToString().Length==2)?7:0), positionGauge.Y*1.0f + 160.0f);
+                if (draw)
+                {
+                    g.DrawString(r.ToString(), new Font("Tahoma", 14.0f), br,
+                        x - 7 - ((r.ToString().Length == 2) ? 7 : 0), positionGauge.Y * 1.0f + 160.0f);
                 }
                 g.DrawLine(new Pen(br, 1.0f), x, positionGauge.Y * 1.0f + 180.0f, x, positionGauge.Y * 1.0f + 190.0f);
 
             }
             g.FillRectangle(rpm_brushA, positionGauge.X + 200 + 140 + 30, positionGauge.Y * 1.0f + 190.0f,
                  Convert.ToSingle(Math.Min(rpm_redline_x, rpm_size * (rpm - rpm_min) / (rpm_max - rpm_min))), 20);
-            if(rpm > rpm_redline)
+            if (rpm > rpm_redline)
             {
 
-                g.FillRectangle(rpm_brushB, positionGauge.X + 200 + 140 + 30+rpm_redline_x, positionGauge.Y * 1.0f + 190.0f,
+                g.FillRectangle(rpm_brushB, positionGauge.X + 200 + 140 + 30 + rpm_redline_x, positionGauge.Y * 1.0f + 190.0f,
                      Convert.ToSingle(rpm_size * (rpm - rpm_min) / (rpm_max - rpm_min)) - rpm_redline_x, 20);
             }
 
@@ -542,7 +429,7 @@ namespace TelemetryVideo
         }
 
 
-        private static void DrawGauges(TelemetryLogReader read, double alpha,int frameNumber,  Point positionGauge, double sample, Graphics g, Image imgTrack, TrackThumbnail TrackThumbnail)
+        private static void DrawGauges(TelemetryLogReader read, double alpha, int frameNumber, Point positionGauge, double sample, Graphics g, Image imgTrack, TrackThumbnail TrackThumbnail)
         {
 
             var Brush_PedalsBackground = GetBrush(alpha, 255, 100, 100, 100);
@@ -550,8 +437,8 @@ namespace TelemetryVideo
             var Brush_PedalsThrottle = GetBrush(alpha, 255, 0, 100, 0);
             var BrushWhite = GetBrush(alpha, 255, 255, 255, 255);
             var BrushTime = GetBrush(1, 255, 255, 255, 255);
-            var BrushGray = GetBrush(alpha, 255, 200,200,200);
-            var BrushBackground = GetBrush(alpha, 100, 0,0,0);
+            var BrushGray = GetBrush(alpha, 255, 200, 200, 200);
+            var BrushBackground = GetBrush(alpha, 100, 0, 0, 0);
 
             var GaugeWhite3 = new Pen(BrushWhite, 3.0f);
             var GaugeWhite2 = new Pen(BrushWhite, 2.0f);
@@ -590,10 +477,10 @@ namespace TelemetryVideo
             g.DrawString(gear.ToString(), new Font("Tahoma", 48), BrushGear, positionGauge.X + 200 + 30, positionGauge.Y + 200 + 110);
 
             /******** LAPTIME *******/
-            var tijd = sample/1000.0;
-            var minutes = (tijd - (tijd%60))/60;
-            var seconds = Math.Floor(tijd - minutes*60);
-            var mills = (tijd%1.0)*1000;
+            var tijd = sample / 1000.0;
+            var minutes = (tijd - (tijd % 60)) / 60;
+            var seconds = Math.Floor(tijd - minutes * 60);
+            var mills = (tijd % 1.0) * 1000;
             var txt = String.Format("{0:00}:{1:00}.{2:000}", minutes, seconds, mills);
             g.DrawString(txt, new Font("Tahoma", 48), BrushTime, positionGauge.X + 50, positionGauge.Y + 450);
 
